@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Model untuk pembeli
+model Buyer {
+  id BigInt @id @default(autoincrement())
+  phone String
+  username String @db.VarChar(255)
+  activation_code String @db.VarChar(255)
+  expired DateTime
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relasi
+  vouchers Voucher[]
+  orders Order[]
+  ratings Rating[]
+
+  @@map("buyers")
+}
+
+// Model untuk voucher
+model Voucher {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  code String @db.VarChar(255)
+  expired_time String @db.VarChar(255)
+  quantity_used Int @default(0)
+  quantity_max Int
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+  buyer_id BigInt?
+
+  // Relasi
+  buyer Buyer? @relation(fields: [buyer_id], references: [id])
+
+  @@map("vouchers")
+}
+
+// Model untuk pengguna
+model User {
+  id Int @id @default(autoincrement())
+  email String @db.VarChar(255)
+  username String @db.VarChar(255)
+  phone String @db.VarChar(255)
+  password String @db.VarChar(255)
+  gender String
+  dob DateTime @db.Date
+  address String @db.Text
+  role String @default("user") @db.VarChar(50) // admin, user
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relasi
+  orders Order[]
+
+  @@map("users")
+}
+
+// Model untuk pesanan
+model Order {
+  id BigInt @id @default(autoincrement())
+  order_code String @db.VarChar(255)
+  user_id Int?
+  buyer_id BigInt?
+  total Float
+  desc String @db.Text
+  discount Float @default(0)
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relasi
+  user User? @relation(fields: [user_id], references: [id])
+  buyer Buyer? @relation(fields: [buyer_id], references: [id])
+  detail_orders DetailOrder[]
+  ratings Rating[]
+
+  @@map("orders")
+}
+
+// Model untuk rating
+model Rating {
+  id BigInt @id @default(autoincrement())
+  order_id BigInt
+  product_id Int
+  buyer_id BigInt
+  rating Float
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relasi
+  order Order @relation(fields: [order_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+  buyer Buyer @relation(fields: [buyer_id], references: [id])
+
+  @@map("ratings")
+}
+
+// Model untuk detail pesanan
+model DetailOrder {
+  id BigInt @id @default(autoincrement())
+  order_id BigInt
+  product_id Int
+  price Float
+  quantity Float
+  sub_total Float
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relasi
+  order Order @relation(fields: [order_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@map("detail_orders")
+}
+
+// Model untuk produk
+model Product {
+  id Int @id @default(autoincrement())
+  product_code String @db.VarChar(255)
+  name String @db.VarChar(255)
+  image String? @db.VarChar(255)
+  type String
+  price Float
+  desc String? @db.Text
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relasi
+  detail_orders DetailOrder[]
+  ratings Rating[]
+
+  @@map("products")
+}
+
